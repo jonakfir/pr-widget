@@ -1,0 +1,49 @@
+{
+  "name": "pr-widget",
+  "version": "0.1.0",
+  "description": "Menu-bar desktop widget for triaging open GitHub PRs across companies",
+  "main": "out/main/index.js",
+  "author": "Jonathan Kfir",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dist": "electron-vite build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.prwidget.app",
+    "productName": "PR Widget",
+    "files": ["out/**/*", "package.json"],
+    "directories": { "output": "dist" },
+    "extraResources": ["scripts/**/*"],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools",
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    }
+  },
+  "dependencies": {
+    "react-markdown": "^9.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.5",
+    "electron-vite": "^2.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.5"
+  }
+}
