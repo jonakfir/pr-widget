@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { deriveCiStatus, listPrs, listMergedPrs, mergePr, closePr, type GhRunner } from '../src/main/gh'
+import { deriveCiStatus, listPrs, listMergedPrs, mergePr, closePr, viewerLogin, type GhRunner } from '../src/main/gh'
 
 type Call = { args: string[]; env?: NodeJS.ProcessEnv }
 
@@ -103,5 +103,42 @@ describe('listPrs / mergePr / closePr', () => {
     const close = calls.find((c) => c.args[0] === 'pr' && c.args[1] === 'close')!
     expect(close.args).toContain('9')
     expect(close.args.join(' ')).not.toContain('--delete-branch')
+  })
+})
+
+describe('listPrs author scope', () => {
+  it('keeps --author @me by default and when allAuthors is false', async () => {
+    const { run, calls } = runnerFrom({ 'pr list': { stdout: '[]' } })
+    await listPrs(run, 'o', 'r', undefined)
+    await listPrs(run, 'o', 'r', undefined, false)
+    for (const c of calls.filter((c) => c.args[0] === 'pr' && c.args[1] === 'list')) {
+      expect(c.args).toContain('--author')
+      expect(c.args).toContain('@me')
+    }
+  })
+
+  it('omits --author when allAuthors is true', async () => {
+    const { run, calls } = runnerFrom({ 'pr list': { stdout: '[]' } })
+    await listPrs(run, 'o', 'r', undefined, true)
+    const list = calls.find((c) => c.args[0] === 'pr' && c.args[1] === 'list')!
+    expect(list.args).not.toContain('--author')
+    expect(list.args).not.toContain('@me')
+    expect(list.args).toContain('--state')
+    expect(list.args).toContain('open')
+  })
+})
+
+describe('viewerLogin', () => {
+  it('queries `api user --jq .login`, trims, and caches per account', async () => {
+    const { run, calls } = runnerFrom({
+      'auth token': { stdout: 'gho_VL\n' },
+      'api user': { stdout: 'octocat\n' }
+    })
+    expect(await viewerLogin(run, 'acctVL')).toBe('octocat')
+    expect(await viewerLogin(run, 'acctVL')).toBe('octocat')
+    const apiCalls = calls.filter((c) => c.args[0] === 'api' && c.args[1] === 'user')
+    expect(apiCalls).toHaveLength(1)
+    expect(apiCalls[0]!.args).toEqual(['api', 'user', '--jq', '.login'])
+    expect(apiCalls[0]!.env?.GH_TOKEN).toBe('gho_VL')
   })
 })

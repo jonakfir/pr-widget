@@ -14,6 +14,8 @@ export interface RepoConfig {
 
 export interface AppConfig {
   pollIntervalMinutes: number
+  /** When true, list every author's open PRs per repo; when false (default), only the signed-in user's. */
+  showAllAuthors: boolean
   /** Ordered tab list. Derived from repos + defaults when absent from the file. */
   companies: string[]
   repos: RepoConfig[]
@@ -34,6 +36,9 @@ export interface PrView {
   baseRefName: string
   url: string
   author: string
+  /** True when the signed-in user authored this PR. Always true unless the
+   *  "show all authors" toggle surfaced a teammate's PR. */
+  isMine: boolean
   createdAt: string
   ciStatus: CiStatus
 }

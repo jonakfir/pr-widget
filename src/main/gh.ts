@@ -95,12 +95,35 @@ export async function repoAccessible(
   return r.code === 0
 }
 
-export async function listPrs(run: GhRunner, owner: string, repo: string, account: string | undefined): Promise<RawPr[]> {
+export async function listPrs(
+  run: GhRunner,
+  owner: string,
+  repo: string,
+  account: string | undefined,
+  allAuthors = false
+): Promise<RawPr[]> {
   const env = await envFor(run, account)
-  // `--author @me` scopes to PRs authored by the authenticated account, so
-  // teammates' PRs never show.
-  const out = await ok(run, ['pr', 'list', '--repo', `${owner}/${repo}`, '--state', 'open', '--author', '@me', '--json', PR_FIELDS], env)
+  // Default scopes to the authenticated account's own PRs (`--author @me`).
+  // When allAuthors is on, we drop that filter so every open PR is returned.
+  const args = ['pr', 'list', '--repo', `${owner}/${repo}`, '--state', 'open']
+  if (!allAuthors) args.push('--author', '@me')
+  args.push('--json', PR_FIELDS)
+  const out = await ok(run, args, env)
   return JSON.parse(out) as RawPr[]
+}
+
+// Signed-in login per account (or the active account when undefined), cached.
+// Only queried when the "show all authors" toggle is on, to tag PR ownership.
+const loginCache = new Map<string, string>()
+
+export async function viewerLogin(run: GhRunner, account: string | undefined): Promise<string> {
+  const cacheKey = account ?? ''
+  const hit = loginCache.get(cacheKey)
+  if (hit !== undefined) return hit
+  const env = await envFor(run, account)
+  const login = (await ok(run, ['api', 'user', '--jq', '.login'], env)).trim()
+  loginCache.set(cacheKey, login)
+  return login
 }
 
 export interface RawMergedPr {

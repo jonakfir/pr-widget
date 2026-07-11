@@ -3,7 +3,7 @@ import { deriveCiStatus, type RawPr } from './gh'
 import { prKey } from './state'
 
 export function buildView(
-  results: Array<{ repo: RepoConfig; prs: RawPr[] }>,
+  results: Array<{ repo: RepoConfig; prs: RawPr[]; viewerLogin?: string }>,
   state: StateMap,
   companies: readonly string[] = DEFAULT_COMPANIES
 ): { groups: CompanyGroup[]; openKeys: string[]; undismissedCount: number } {
@@ -16,7 +16,7 @@ export function buildView(
   for (const c of order) byCompany.set(c, [])
   const openKeys: string[] = []
 
-  for (const { repo, prs } of results) {
+  for (const { repo, prs, viewerLogin } of results) {
     for (const pr of prs) {
       const key = prKey(repo.owner, repo.repo, pr.number)
       openKeys.push(key)
@@ -33,6 +33,7 @@ export function buildView(
         baseRefName: pr.baseRefName,
         url: pr.url,
         author: pr.author?.login ?? 'unknown',
+        isMine: !viewerLogin || (pr.author?.login ?? '').toLowerCase() === viewerLogin.toLowerCase(),
         createdAt: pr.createdAt,
         ciStatus: deriveCiStatus(pr.statusCheckRollup)
       }
