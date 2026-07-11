@@ -1,6 +1,6 @@
 // src/main/ipc.ts
 import { ipcMain } from 'electron'
-import { loadConfig, addCompany, addRepo, removeCompany, removeRepo } from './config'
+import { loadConfig, addCompany, addRepo, removeCompany, removeRepo, setShowAllAuthors } from './config'
 import { loadState, saveState, markDismissed, prKey } from './state'
 import { mergePr, closePr, listMergedPrs, listAccounts, repoAccessible, defaultRunner } from './gh'
 import { spawnFix } from './fix'
@@ -131,6 +131,26 @@ export function registerIpc(triggerRefresh: () => void): void {
       return loadConfig().repos
     } catch {
       return []
+    }
+  })
+
+  // Read global settings (currently just the mine-vs-everyone author scope).
+  ipcMain.handle('prw:get-settings', async (): Promise<{ showAllAuthors: boolean }> => {
+    try {
+      return { showAllAuthors: loadConfig().showAllAuthors }
+    } catch {
+      return { showAllAuthors: false }
+    }
+  })
+
+  // Flip the global author-scope flag, then repoll so the list updates.
+  ipcMain.handle('prw:set-show-all', async (_e, value: boolean): Promise<ActionResult> => {
+    try {
+      setShowAllAuthors(value)
+      triggerRefresh()
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: (e as Error).message }
     }
   })
 
