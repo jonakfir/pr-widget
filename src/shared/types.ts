@@ -36,6 +36,9 @@ export interface PrView {
   baseRefName: string
   url: string
   author: string
+  /** True when the signed-in user authored this PR. Always true unless the
+   *  "show all authors" toggle surfaced a teammate's PR. */
+  isMine: boolean
   createdAt: string
   ciStatus: CiStatus
 }
