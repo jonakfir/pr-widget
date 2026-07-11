@@ -56,15 +56,17 @@ export function PrCard({ pr }: { pr: PrView }) {
       </div>
       <div className="card-body"><ReactMarkdown>{pr.body || '_No description_'}</ReactMarkdown></div>
 
-      {needsFix && (
+      {pr.isMine && needsFix && (
         <button className="fix-btn" disabled={busy} onClick={(e) => { e.stopPropagation(); setPending('fix') }}>
           ✦ Fix with Claude
         </button>
       )}
-      <div className="card-actions" onClick={(e) => e.stopPropagation()}>
-        <button disabled={busy} onClick={() => setPending('merge')}>Merge</button>
-        <button disabled={busy} className="danger" onClick={() => setPending('discard')}>Discard</button>
-      </div>
+      {pr.isMine && (
+        <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+          <button disabled={busy} onClick={() => setPending('merge')}>Merge</button>
+          <button disabled={busy} className="danger" onClick={() => setPending('discard')}>Discard</button>
+        </div>
+      )}
 
       {pending === 'merge' && (
         <ConfirmDialog

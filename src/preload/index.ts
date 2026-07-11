@@ -21,5 +21,7 @@ contextBridge.exposeInMainWorld('prwidget', {
   addRepo: (company: string, url: string): Promise<ActionResult> => ipcRenderer.invoke('prw:add-repo', company, url),
   removeCompany: (name: string): Promise<ActionResult> => ipcRenderer.invoke('prw:remove-company', name),
   removeRepo: (owner: string, repo: string): Promise<ActionResult> => ipcRenderer.invoke('prw:remove-repo', owner, repo),
-  getRepos: (): Promise<RepoConfig[]> => ipcRenderer.invoke('prw:repos')
+  getRepos: (): Promise<RepoConfig[]> => ipcRenderer.invoke('prw:repos'),
+  getSettings: (): Promise<{ showAllAuthors: boolean }> => ipcRenderer.invoke('prw:get-settings'),
+  setShowAllAuthors: (value: boolean): Promise<ActionResult> => ipcRenderer.invoke('prw:set-show-all', value)
 })

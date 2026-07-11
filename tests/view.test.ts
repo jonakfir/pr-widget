@@ -8,6 +8,11 @@ const mkPr = (n: number, created: string): RawPr => ({
   url: `u${n}`, author: { login: 'me' }, createdAt: created, statusCheckRollup: []
 })
 
+const mkPrBy = (n: number, login: string): RawPr => ({
+  number: n, title: `PR ${n}`, body: '', headRefName: 'h', baseRefName: 'main',
+  url: `u${n}`, author: { login }, createdAt: `2026-01-0${n}T00:00:00Z`, statusCheckRollup: []
+})
+
 const alphaRepo: RepoConfig = { owner: 'o', repo: 'r', company: 'Alpha' }
 const COMPANIES = ['Alpha', 'Beta', 'Gamma', 'Delta']
 
@@ -45,5 +50,23 @@ describe('buildView', () => {
       COMPANIES
     )
     expect(groups[0]!.prs.map((p) => p.number)).toEqual([2, 1])
+  })
+})
+
+describe('buildView isMine', () => {
+  it('marks every PR mine when viewerLogin is absent', () => {
+    const { groups } = buildView([{ repo: alphaRepo, prs: [mkPr(1, 'a')] }], {}, COMPANIES)
+    expect(groups[0]!.prs[0]!.isMine).toBe(true)
+  })
+
+  it('tags ownership by viewerLogin (case-insensitive) when present', () => {
+    const { groups } = buildView(
+      [{ repo: alphaRepo, prs: [mkPrBy(1, 'Octocat'), mkPrBy(2, 'teammate')], viewerLogin: 'octocat' }],
+      {},
+      COMPANIES
+    )
+    const byNum = Object.fromEntries(groups[0]!.prs.map((p) => [p.number, p.isMine]))
+    expect(byNum[1]).toBe(true)
+    expect(byNum[2]).toBe(false)
   })
 })

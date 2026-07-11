@@ -1,7 +1,7 @@
 // src/main/poller.ts
 import { loadConfig } from './config'
 import { loadState, saveState, pruneState } from './state'
-import { listPrs, defaultRunner, type GhRunner } from './gh'
+import { listPrs, viewerLogin, defaultRunner, type GhRunner } from './gh'
 import { buildView } from './view'
 import type { CompanyGroup, RepoConfig } from '../shared/types'
 
@@ -36,13 +36,18 @@ export async function pollOnce(run: GhRunner = defaultRunner): Promise<PollOutco
   const cfg = loadConfig()
   const state = loadState()
   const failures: string[] = []
+  const allAuthors = cfg.showAllAuthors
   const results = await mapPool(cfg.repos, 6, async (repo: RepoConfig) => {
     try {
-      const prs = await listPrs(run, repo.owner, repo.repo, repo.account)
-      return { repo, prs }
+      const prs = await listPrs(run, repo.owner, repo.repo, repo.account, allAuthors)
+      // Only resolve the signed-in login when we need it to distinguish
+      // teammates' PRs from the user's own. viewerLogin caches per account,
+      // so this is ~one gh call per distinct account per cycle.
+      const login = allAuthors ? await viewerLogin(run, repo.account) : undefined
+      return { repo, prs, viewerLogin: login }
     } catch (e) {
       failures.push(`${repo.owner}/${repo.repo}: ${(e as Error).message}`)
-      return { repo, prs: [] as Awaited<ReturnType<typeof listPrs>> }
+      return { repo, prs: [] as Awaited<ReturnType<typeof listPrs>>, viewerLogin: undefined }
     }
   })
   if (cfg.repos.length > 0 && failures.length === cfg.repos.length) {

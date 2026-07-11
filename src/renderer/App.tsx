@@ -11,6 +11,7 @@ export default function App() {
   const [active, setActive] = useState<Company | null>(null)
   const [addingCompany, setAddingCompany] = useState(false)
   const [companyName, setCompanyName] = useState('')
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     const loadRepos = () => { void window.prwidget.getRepos().then(setRepos) }
@@ -18,6 +19,7 @@ export default function App() {
     window.prwidget.onError((m) => setError(m))
     window.prwidget.refresh()
     loadRepos()
+    void window.prwidget.getSettings().then((s) => setShowAll(s.showAllAuthors))
   }, [])
 
   // Default the active tab to the first company with open PRs (fall back to first company).
@@ -50,6 +52,11 @@ export default function App() {
     else alert(res.error ?? 'Failed to add company')
   }
 
+  const setAuthorScope = (value: boolean) => {
+    setShowAll(value) // optimistic; the ensuing refresh repopulates the list
+    void window.prwidget.setShowAllAuthors(value)
+  }
+
   return (
     <div className="app">
       <header className="titlebar">
@@ -57,6 +64,22 @@ export default function App() {
           <span className="dot" title="Live — auto-refreshing" />
         </div>
         <div className="titlebar-actions">
+          <div className="mode-toggle" role="group" aria-label="PR author scope">
+            <button
+              className={showAll ? 'seg' : 'seg active'}
+              title="Show only my PRs"
+              onClick={() => setAuthorScope(false)}
+            >
+              Mine
+            </button>
+            <button
+              className={showAll ? 'seg active' : 'seg'}
+              title="Show everyone's PRs"
+              onClick={() => setAuthorScope(true)}
+            >
+              All
+            </button>
+          </div>
           <button className="icon-btn" title="Refresh" onClick={() => window.prwidget.refresh()}>⟳</button>
           <button className="icon-btn" title="Hide" onClick={() => window.prwidget.hide()}>✕</button>
         </div>

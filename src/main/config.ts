@@ -13,6 +13,7 @@ const RepoSchema = z.object({
 
 const ConfigSchema = z.object({
   pollIntervalMinutes: z.number().positive().default(0.5),
+  showAllAuthors: z.boolean().default(false),
   companies: z.array(z.string().min(1)).optional(),
   repos: z.array(RepoSchema)
 })
@@ -48,6 +49,7 @@ export function loadConfig(path: string = defaultConfigPath()): AppConfig {
   const d = parsed.data
   return {
     pollIntervalMinutes: d.pollIntervalMinutes,
+    showAllAuthors: d.showAllAuthors,
     companies: effectiveCompanies(d.companies, d.repos),
     repos: d.repos
   }
@@ -99,6 +101,14 @@ export function removeCompany(name: string, path: string = defaultConfigPath()):
 export function removeRepo(owner: string, repo: string, path: string = defaultConfigPath()): AppConfig {
   const cfg = loadConfig(path)
   cfg.repos = cfg.repos.filter((r) => !(r.owner === owner && r.repo === repo))
+  saveConfig(cfg, path)
+  return cfg
+}
+
+// Set the global "show all authors" flag (mine-only vs everyone's open PRs).
+export function setShowAllAuthors(value: boolean, path: string = defaultConfigPath()): AppConfig {
+  const cfg = loadConfig(path)
+  cfg.showAllAuthors = value
   saveConfig(cfg, path)
   return cfg
 }

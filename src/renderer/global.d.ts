@@ -19,6 +19,8 @@ declare global {
       removeCompany: (name: string) => Promise<ActionResult>
       removeRepo: (owner: string, repo: string) => Promise<ActionResult>
       getRepos: () => Promise<RepoConfig[]>
+      getSettings: () => Promise<{ showAllAuthors: boolean }>
+      setShowAllAuthors: (value: boolean) => Promise<ActionResult>
     }
   }
 }
