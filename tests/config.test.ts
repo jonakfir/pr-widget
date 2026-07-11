@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mkdtempSync, writeFileSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { loadConfig, addCompany, addRepo, removeCompany, removeRepo } from '../src/main/config'
+import { loadConfig, addCompany, addRepo, removeCompany, removeRepo, setShowAllAuthors } from '../src/main/config'
 
 function writeConfig(obj: unknown): string {
   const dir = mkdtempSync(join(tmpdir(), 'prw-'))
@@ -139,5 +139,26 @@ describe('removeRepo', () => {
     const cfg = removeRepo('o', 'a', p)
     expect(cfg.repos.map((r) => r.repo)).toEqual(['b'])
     expect(cfg.companies).toEqual(['Alpha'])
+  })
+})
+
+describe('showAllAuthors', () => {
+  it('defaults to false when absent (backward compatible)', () => {
+    const p = writeConfig({ pollIntervalMinutes: 1, repos: [] })
+    expect(loadConfig(p).showAllAuthors).toBe(false)
+  })
+
+  it('loads an explicit true', () => {
+    const p = writeConfig({ pollIntervalMinutes: 1, showAllAuthors: true, repos: [] })
+    expect(loadConfig(p).showAllAuthors).toBe(true)
+  })
+
+  it('setShowAllAuthors round-trips and persists', () => {
+    const p = writeConfig({ pollIntervalMinutes: 1, repos: [] })
+    const cfg = setShowAllAuthors(true, p)
+    expect(cfg.showAllAuthors).toBe(true)
+    expect(loadConfig(p).showAllAuthors).toBe(true)
+    expect(setShowAllAuthors(false, p).showAllAuthors).toBe(false)
+    expect(loadConfig(p).showAllAuthors).toBe(false)
   })
 })

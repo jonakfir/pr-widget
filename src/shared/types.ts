@@ -14,6 +14,8 @@ export interface RepoConfig {
 
 export interface AppConfig {
   pollIntervalMinutes: number
+  /** When true, list every author's open PRs per repo; when false (default), only the signed-in user's. */
+  showAllAuthors: boolean
   /** Ordered tab list. Derived from repos + defaults when absent from the file. */
   companies: string[]
   repos: RepoConfig[]
